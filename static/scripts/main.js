@@ -99,25 +99,6 @@ function renderFrame (audio, analyser) {
   playGameOfLife();
   setFrequencySeeds(frequencyData);
   drawLivingCells();
-
-  // var columnWidth = canvas.width / frequencyData.length;
-  // var columnHeight = canvas.height / 255;
-  
-  // canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-  // canvasContext.fillStyle = 'rgba(0, 0, 0, 0.3)';
-  // canvasContext.strokeStyle = color;
-  // canvasContext.lineCap = 'round';
-
-  // canvasContext.beginPath();
-  // canvasContext.moveTo(0, canvas.height);
-
-  // for (var i = 1; i < frequencyData.length; i++) {
-  //   canvasContext.lineTo(i * columnWidth, canvas.height - 10 - frequencyData[i] * columnHeight);
-  // }
-  // canvasContext.lineTo(canvas.width, canvas.height);
-  // canvasContext.closePath();
-  // canvasContext.fill();
-  // canvasContext.stroke();
   
   animationFrame = requestAnimationFrame(function () {
     renderFrame(audio, analyser);
@@ -132,12 +113,6 @@ function setFrequencySeeds(frequencyData) {
 }
 
 function playGameOfLife() {
-  // for(var column = 0; column < scaleSize; column++) {
-  //   for(var row = 0; row < scaleSize; row++) {
-  //     cells[column][row] = dead;
-  //   }
-  // }
-
   for(var column = 0; column < scaleSize; column++) {
     for(var row = 0; row < scaleSize; row++) {
       var neighbors = getNeighbors(column, row);
