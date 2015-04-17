@@ -77,33 +77,141 @@ function reduce (array, size) {
   return newArray;
 }
 
+var cells = [[]];
+var alive = true;
+var dead = false;
+var scaleSize = 255;
+
+for (var i = 0; i < scaleSize; i++) {
+  var row = [];
+  cells.push(row);
+
+  for (var j = 0; j < scaleSize; j++) {
+    cells[i].push(dead);
+  }
+}
+
 function renderFrame (audio, analyser) {
   var frequencyData = new Uint8Array(analyser.frequencyBinCount);
   analyser.getByteFrequencyData(frequencyData);
-  frequencyData = reduce(frequencyData, canvas.width / sampleSize);
+  frequencyData = reduce(frequencyData, scaleSize);
   
-  var columnWidth = canvas.width / frequencyData.length;
-  var columnHeight = canvas.height / 255;
+  playGameOfLife();
+  setFrequencySeeds(frequencyData);
+  drawLivingCells();
+
+  // var columnWidth = canvas.width / frequencyData.length;
+  // var columnHeight = canvas.height / 255;
   
-  canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-  canvasContext.fillStyle = 'rgba(0, 0, 0, 0.3)';
-  canvasContext.strokeStyle = color;
-  canvasContext.lineCap = 'round';
+  // canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+  // canvasContext.fillStyle = 'rgba(0, 0, 0, 0.3)';
+  // canvasContext.strokeStyle = color;
+  // canvasContext.lineCap = 'round';
 
-  canvasContext.beginPath();
-  canvasContext.moveTo(0, canvas.height);
+  // canvasContext.beginPath();
+  // canvasContext.moveTo(0, canvas.height);
 
-  for (var i = 1; i < frequencyData.length; i++) {
-    canvasContext.lineTo(i * columnWidth, canvas.height - 10 - frequencyData[i] * columnHeight);
-  }
-  canvasContext.lineTo(canvas.width, canvas.height);
-  canvasContext.closePath();
-  canvasContext.fill();
-  canvasContext.stroke();
+  // for (var i = 1; i < frequencyData.length; i++) {
+  //   canvasContext.lineTo(i * columnWidth, canvas.height - 10 - frequencyData[i] * columnHeight);
+  // }
+  // canvasContext.lineTo(canvas.width, canvas.height);
+  // canvasContext.closePath();
+  // canvasContext.fill();
+  // canvasContext.stroke();
   
   animationFrame = requestAnimationFrame(function () {
     renderFrame(audio, analyser);
   });
+}
+
+function setFrequencySeeds(frequencyData) {
+  for(var column = 0; column < scaleSize; column++) {
+    var row = frequencyData[column];
+    cells[column][row] = alive;
+  }
+}
+
+function playGameOfLife() {
+  // for(var column = 0; column < scaleSize; column++) {
+  //   for(var row = 0; row < scaleSize; row++) {
+  //     cells[column][row] = dead;
+  //   }
+  // }
+
+  for(var column = 0; column < scaleSize; column++) {
+    for(var row = 0; row < scaleSize; row++) {
+      var neighbors = getNeighbors(column, row);
+      cells[column][row] = cellShouldLive(cells[column][row], neighbors);
+    }
+  }
+}
+
+function getNeighbors(c, r) {
+  var colMin = Math.max(column, 0);
+  var rowMin = Math.max(row, 0);
+  var colMax = Math.min(column, scaleSize);
+  var rowMax = Math.min(row, scaleSize);
+
+  var neighbors = [];
+
+  for(var column = colMin; column < colMax; column++) {
+    for(var row = rowMin; row < rowMax; row++) {
+      neighbors.push(cells[column][row]);
+    }
+  }
+
+  return neighbors;
+}
+
+function cellShouldLive(cell, neighbors) {
+  var livingNeighborsTotal = getLivingNeighborsTotal(neighbors);
+
+  if (livingNeighborsTotal > 3 || livingNeighborsTotal < 2)
+    return false;
+  
+  if (cell == dead && livingNeighborsTotal == 3)
+    return true;
+
+  return cell;
+}
+
+function getLivingNeighborsTotal(neighbors) {
+  var total = 0;
+
+  for(var i = 0; i < neighbors.length; i++) {
+    if (neighbors[i] == alive) {
+      total++;
+    }
+  }
+
+  return total;
+}
+
+function drawLivingCells() {
+  canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+  canvasContext.fillStyle = color;
+  canvasContext.strokeStyle = color;
+  canvasContext.lineCap = 'round';
+
+  canvasContext.beginPath();
+
+  var cellHeight = canvas.height / scaleSize;
+  var cellWidth = canvas.width / scaleSize;
+  
+  for(var column = 0; column < cells.length; column++) {
+    for(var row = 0; row < cells[column].length; row++) {
+      if (cells[column][row] == alive) {
+        var x = cellWidth * column;
+        var y = canvas.height - 10 - cellHeight * row;
+
+        canvasContext.rect(x, y, cellWidth, cellHeight);
+      }
+    }
+  }
+
+  canvasContext.closePath();
+  canvasContext.fill();
+  canvasContext.stroke();
 }
 
 function start (file) {
