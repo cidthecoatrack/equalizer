@@ -77,19 +77,25 @@ function reduce (array, size) {
   return newArray;
 }
 
-var cells = [[]];
+function getNewGrid() {
+  var newGrid = [[]]; 
+
+  for (var i = 0; i < scaleSize; i++) {
+    var row = [];
+    newGrid.push(row);
+
+    for (var j = 0; j < scaleSize; j++) {
+      newGrid[i].push(dead);
+    }
+  }
+
+  return newGrid;
+}
+
+var cells = getNewGrid();
 var alive = true;
 var dead = false;
 var scaleSize = 255;
-
-for (var i = 0; i < scaleSize; i++) {
-  var row = [];
-  cells.push(row);
-
-  for (var j = 0; j < scaleSize; j++) {
-    cells[i].push(dead);
-  }
-}
 
 function renderFrame (audio, analyser) {
   var frequencyData = new Uint8Array(analyser.frequencyBinCount);
@@ -113,33 +119,20 @@ function setFrequencySeeds(frequencyData) {
 }
 
 function playGameOfLife() {
+  var nextGen = getNewGrid();
+
   for(var column = 0; column < scaleSize; column++) {
     for(var row = 0; row < scaleSize; row++) {
-      var neighbors = getNeighbors(column, row);
-      cells[column][row] = cellShouldLive(cells[column][row], neighbors);
-    }
-  }
-}
-
-function getNeighbors(c, r) {
-  var colMin = Math.max(column, 0);
-  var rowMin = Math.max(row, 0);
-  var colMax = Math.min(column, scaleSize);
-  var rowMax = Math.min(row, scaleSize);
-
-  var neighbors = [];
-
-  for(var column = colMin; column < colMax; column++) {
-    for(var row = rowMin; row < rowMax; row++) {
-      neighbors.push(cells[column][row]);
+      nextGen[column][row] = cellShouldLive(column, row);
     }
   }
 
-  return neighbors;
+  cells = nextGen;
 }
 
-function cellShouldLive(cell, neighbors) {
-  var livingNeighborsTotal = getLivingNeighborsTotal(neighbors);
+function cellShouldLive(column, row) {
+  var cell = cells[column][row];
+  var livingNeighborsTotal = getLivingNeighborsTotal(column, row);
 
   if (livingNeighborsTotal > 3 || livingNeighborsTotal < 2)
     return false;
@@ -150,12 +143,18 @@ function cellShouldLive(cell, neighbors) {
   return cell;
 }
 
-function getLivingNeighborsTotal(neighbors) {
+function getLivingNeighborsTotal(c, r) {
+  var colMin = Math.max(c - 1, 0);
+  var rowMin = Math.max(r - 1, 0);
+  var colMax = Math.min(c + 1, scaleSize);
+  var rowMax = Math.min(r + 1, scaleSize);
   var total = 0;
 
-  for(var i = 0; i < neighbors.length; i++) {
-    if (neighbors[i] == alive) {
-      total++;
+  for(var column = colMin; column <= colMax; column++) {
+    for(var row = rowMin; row <= rowMax; row++) {
+      if (cells[column][row]) {
+        total++;
+      }
     }
   }
 
